@@ -6,13 +6,13 @@
   "author": {
     "name": "Electron React Boilerplate Maintainers",
     "email": "electronreactboilerplate@gmail.com",
-    "url": "https://github.com/electron-react-boilerplate",
-    "make": "electron-forge make"
+    "url": "https://github.com/electron-react-boilerplate"
   },
   "scripts": {
     "electron-rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",
     "link-modules": "node -r ts-node/register ../../.erb/scripts/link-modules.ts",
-    "postinstall": "npm run electron-rebuild && npm run link-modules"
+    "postinstall": "npm run electron-rebuild && npm run link-modules",
+    "make": "electron-forge make"
   },
   "dependencies": {
     "electron-forge": "^5.2.4",
