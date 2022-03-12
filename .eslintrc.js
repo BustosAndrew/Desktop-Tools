@@ -1,3 +1,5 @@
+const { off } = require('process');
+
 module.exports = {
   extends: 'erb',
   rules: {
@@ -6,6 +8,26 @@ module.exports = {
     'import/no-unresolved': 'error',
     // Since React 17 and typescript 4.1 you can safely disable the rule
     'react/react-in-jsx-scope': 'off',
+    'react/jsx-boolean-value': 'off',
+    'prefer-template': 'off',
+    'import/no-duplicates': 'off',
+    'import/prefer-default-export': 'off',
+    '@typescript-eslint/no-unused-expressions': 'off',
+    'jsx-a11y/click-events-have-key-events': 'off',
+    'jsx-a11y/no-static-element-interactions': 'off',
+    'no-param-reassign': 'off',
+    'object-shorthand': 'off',
+    'no-useless-return': 'off',
+    'no-unneeded-ternary': 'off',
+    'no-nested-ternary': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    'react/require-default-props': 'off',
+    'prettier/prettier': [
+      'error',
+      {
+        endOfLine: 'auto',
+      },
+    ],
   },
   parserOptions: {
     ecmaVersion: 2020,

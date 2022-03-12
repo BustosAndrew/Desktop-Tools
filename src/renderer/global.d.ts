@@ -1,16 +1,16 @@
 declare let window: Window;
 export interface IElectron {
   ipcRenderer: {
-    //getMsgOnce(channel: any, func: any): void;
-    sendMsg(arg: string): void;
-    getMsg(): Promise<string>;
+    getPathOnce(channel: any, func: any): void;
+    getPath(): void;
+    isValidPath(arg: string): Promise<string>;
+    changeFilenames(arg: any[]): Promise<object>;
+    generateTxtFile(arg: string[]): Promise<string>;
   };
 }
 declare global {
   interface Window {
     electron: IElectron;
-    process: any;
-    require: any;
   }
 }
 export {};

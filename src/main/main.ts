@@ -10,7 +10,7 @@
  */
 import path from 'path';
 import fs from 'fs';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -26,22 +26,109 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
+// updates every filename within the directory/subdirectories if any contains characters that are searched for
+// either replaces/deletes the matching characters within a filename
+// returns the number of filenames changed, if any
+const fileUpdater = (contents: string[], arg: any[], numChanged: number) => {
+  contents.forEach((content) => {
+    const resolvedContent = path.resolve(arg[0], content); // arg[0] = path passed in by user
+    const stat = fs.statSync(resolvedContent);
+    if (stat.isDirectory()) {
+      const newPath: string = arg[0] + '/' + content;
+      const folder: string[] = fs.readdirSync(newPath);
+      numChanged = fileUpdater(folder, [newPath, arg[1], arg[2]], numChanged); // arg[1] = characters being searched, arg[2] = characters to replace with
+    } else if (content.indexOf(arg[1]) !== -1) {
+      let newFilename = '';
+      // arg[3] = replaceAll?
+      if (arg[3]) newFilename = content.replaceAll(arg[1], arg[2]);
+      else newFilename = content.replace(arg[1], arg[2]);
+      // replacing old file path with new one
+      fs.renameSync(arg[0] + '/' + content, arg[0] + '/' + newFilename);
+      numChanged += 1;
+    }
+  });
+  return numChanged;
+};
+
+// will print every filename in the directory/subdirectories
+const viewFiles = (contents: string[], dir: string, txtOutput: string) => {
+  contents.forEach((content) => {
+    const resolvedContent = path.resolve(dir, content);
+    const stat = fs.statSync(resolvedContent);
+    if (stat.isDirectory()) {
+      const newDir: string = dir + '/' + content;
+      const folder: string[] = fs.readdirSync(newDir);
+      txtOutput = viewFiles(folder, newDir, txtOutput); // if there are more filenames within a subfolder, run this func again inside it
+    } else {
+      txtOutput += dir + '\\' + content + '\n';
+    }
+  });
+  return txtOutput;
+};
+
+// template code (ignore)
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg + 'po'));
   event.reply('ipc-example', msgTemplate('pong'));
 });
 
-ipcMain.on('send-msg', async (event, arg) => {
-  // const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
+// nothing passed into arg
+ipcMain.on('path', async (event, arg) => {
   console.log(arg);
-  event.reply('send-msg', null);
+  if (mainWindow !== null) {
+    // opens a file explorer to select a folder
+    dialog
+      .showOpenDialog(mainWindow, {
+        properties: ['openDirectory'],
+      })
+      .then(({ filePaths }) => {
+        event.reply('path', filePaths[0]); // filePaths[0] = folder selected
+        console.log(filePaths);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
 });
 
-ipcMain.handle('msg', async () => {
-  const filenames = fs.readdirSync(__dirname);
+// returns number of filenames changed, if any
+ipcMain.handle('change-files', async (event, arg) => {
+  let numChanged = 0;
+  const contents = fs.readdirSync(arg[0]); // arg[0] = valid folder path
+  numChanged = fileUpdater(contents, arg, numChanged);
+  return { status: 'Success', numChanged: numChanged };
+});
 
-  return filenames;
+// returns filenames if a valid path is passed into arg
+ipcMain.handle('path', async (event, arg) => {
+  try {
+    const filenames = fs.readdirSync(arg);
+    return filenames;
+  } catch (error) {
+    return 'Invalid folder path!';
+  }
+});
+
+// returns the txt file location once generated or an error
+ipcMain.handle('view-filenames', async (event, arg) => {
+  if (!fs.existsSync(app.getPath('desktop') + '/logs')) {
+    fs.mkdirSync(app.getPath('desktop') + '/logs');
+  }
+
+  try {
+    let txtOutput = '';
+    app.setAppLogsPath(app.getPath('desktop') + '/logs');
+    const logsPath: string = app.getPath('logs');
+    const contents = fs.readdirSync(arg[0]); // arg[0] = valid folder path
+    txtOutput +=
+      'Contents of directory ' + arg[0] + ' and its subdirectories:\n';
+    txtOutput = viewFiles(contents, arg[0], txtOutput);
+    fs.writeFileSync(logsPath + '/' + arg[1], txtOutput); // arg[1] = passed in txt filename
+    return logsPath; // txt file location
+  } catch (error) {
+    return error;
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {
