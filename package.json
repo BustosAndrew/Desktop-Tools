@@ -13,7 +13,8 @@
     "start:main": "cross-env NODE_ENV=development electron -r ts-node/register/transpile-only ./src/main/main.ts",
     "start:renderer": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack serve --config ./.erb/configs/webpack.config.renderer.dev.ts",
     "test": "jest",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "make": "electron-forge make"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -230,6 +231,7 @@
     "@emotion/styled": "^11.8.1",
     "@mui/material": "^5.4.3",
     "electron-debug": "^3.2.0",
+    "electron-forge": "^5.2.4",
     "electron-log": "^4.4.4",
     "electron-updater": "^4.6.5",
     "history": "^5.2.0",
@@ -261,5 +263,31 @@
   },
   "resolutions": {
     "webpack": "5.41.1"
+  },
+  "config": {
+    "forge": {
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "electron_publish_example"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
   }
 }
