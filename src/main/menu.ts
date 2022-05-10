@@ -244,6 +244,14 @@ export default class MenuBuilder {
                     BrowserWindow.getFocusedWindow()?.webContents.send('about');
                   },
                 },
+                {
+                  label: 'How To',
+                  click: () => {
+                    BrowserWindow.getFocusedWindow()?.webContents.send(
+                      'how-to'
+                    );
+                  },
+                },
               ],
       },
       {

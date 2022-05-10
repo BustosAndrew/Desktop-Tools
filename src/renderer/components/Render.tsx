@@ -10,7 +10,6 @@ import { Field } from './Field';
 import { About } from './About';
 import { HowTo } from './HowTo';
 import '../App.css';
-// import { ipcRenderer } from 'electron/renderer';
 
 export const Render = () => {
   const [fieldsDisabled, setFieldDisabled] = useState<any>({
@@ -110,13 +109,10 @@ export const Render = () => {
       .catch(() => {});
   };
 
-  // window.electron.ipcRenderer.on('about', (event: any, message: any) => {
-  //   if (message === 'show') setShowAbout(true);
-  // });
-
   // when the page first loads or when searchQuery/path changes
   useEffect(() => {
     window.electron.ipcRenderer.on('about', () => setShowAbout(true));
+    window.electron.ipcRenderer.on('how-to', () => setShowHowTo(true));
 
     if (!searchQuery) {
       setDisableExecute(true);
