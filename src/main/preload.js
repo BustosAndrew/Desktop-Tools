@@ -6,7 +6,7 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.send('ipc-example', 'ping');
     },
     on(channel, func) {
-      const validChannels = ['ipc-example', 'path'];
+      const validChannels = ['ipc-example', 'path', 'about'];
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
         ipcRenderer.on(channel, (event, ...args) => func(...args));
@@ -36,7 +36,10 @@ contextBridge.exposeInMainWorld('electron', {
       return ipcRenderer.invoke('change-files', arg);
     },
     async generateTxtFile(arg) {
-      return ipcRenderer.invoke('view-filenames', arg);
+      return ipcRenderer.invoke('view-contents', arg); // used for either filenames/folder names
+    },
+    async changeFolderNames(arg) {
+      return ipcRenderer.invoke('change-folders', arg);
     },
   },
 });

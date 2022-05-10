@@ -1,12 +1,11 @@
 {
   "name": "filename-updater",
-  "version": "1.2.0",
-  "description": "A foundation for scalable desktop apps",
+  "version": "1.5.1",
+  "description": "Modify every filename/folder name within a directory and its subdirectories of your choice.",
   "main": "./dist/main/main.js",
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://github.com/electron-react-boilerplate"
+    "name": "Andrew Bustos",
+    "email": "andrew.bustos@stocktonca.gov"
   },
   "scripts": {
     "electron-rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",

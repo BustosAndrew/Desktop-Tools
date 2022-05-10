@@ -34,17 +34,63 @@ const fileUpdater = (contents: string[], arg: any[], numChanged: number) => {
     const resolvedContent = path.resolve(arg[0], content); // arg[0] = path passed in by user
     const stat = fs.statSync(resolvedContent);
     if (stat.isDirectory()) {
-      const newPath: string = arg[0] + '/' + content;
+      const newPath: string = arg[0] + '\\' + content;
       const folder: string[] = fs.readdirSync(newPath);
-      numChanged = fileUpdater(folder, [newPath, arg[1], arg[2]], numChanged); // arg[1] = characters being searched, arg[2] = characters to replace with
+      numChanged = fileUpdater(
+        folder,
+        [newPath, arg[1], arg[2], arg[3]],
+        numChanged
+      ); // arg[1] = characters being searched, arg[2] = characters to replace with
     } else if (content.indexOf(arg[1]) !== -1) {
       let newFilename = '';
       // arg[3] = replaceAll?
       if (arg[3]) newFilename = content.replaceAll(arg[1], arg[2]);
       else newFilename = content.replace(arg[1], arg[2]);
       // replacing old file path with new one
-      fs.renameSync(arg[0] + '/' + content, arg[0] + '/' + newFilename);
+      fs.renameSync(arg[0] + '\\' + content, arg[0] + '\\' + newFilename);
       numChanged += 1;
+    }
+  });
+  return numChanged;
+};
+
+// updates every folder name within the directory/subdirectories if any contains characters that are searched for
+// either replaces/deletes the matching characters within a folder name
+// returns the number of folder names changed, if any
+const folderUpdater = (contents: string[], arg: any[], numChanged: number) => {
+  if (!contents) return 0;
+
+  contents.forEach((content) => {
+    const resolvedContent = path.resolve(arg[0], content); // arg[0] = path passed in by user
+    const stat = fs.statSync(resolvedContent);
+    if (!stat.isDirectory()) {
+      return;
+    }
+
+    if (content.indexOf(arg[1]) !== -1) {
+      let newFolderName = '';
+      // arg[3] = replaceAll?
+      if (arg[3]) newFolderName = content.replaceAll(arg[1], arg[2]);
+      else newFolderName = content.replace(arg[1], arg[2]);
+      // replacing old file path with new one
+      fs.renameSync(arg[0] + '\\' + content, arg[0] + '\\' + newFolderName);
+      // console.log(newFolderName);
+      numChanged += 1;
+      const newPath: string = arg[0] + '\\' + newFolderName;
+      const folder: string[] = fs.readdirSync(newPath);
+      numChanged = folderUpdater(
+        folder,
+        [newPath, arg[1], arg[2], arg[3]],
+        numChanged
+      ); // arg[1] = characters being searched, arg[2] = characters to replace with
+    } else {
+      const newPath: string = arg[0] + '\\' + content;
+      const folder: string[] = fs.readdirSync(newPath);
+      numChanged = folderUpdater(
+        folder,
+        [newPath, arg[1], arg[2], arg[3]],
+        numChanged
+      );
     }
   });
   return numChanged;
@@ -52,16 +98,42 @@ const fileUpdater = (contents: string[], arg: any[], numChanged: number) => {
 
 // will print every filename in the directory/subdirectories
 const viewFiles = (contents: string[], dir: string, txtOutput: string) => {
+  // let folderFound = false;
+  // let enterFolder = false;
   contents.forEach((content) => {
     const resolvedContent = path.resolve(dir, content);
     const stat = fs.statSync(resolvedContent);
     if (stat.isDirectory()) {
-      const newDir: string = dir + '/' + content;
+      // folderFound = true;
+      return; // continue;
+    }
+    txtOutput += dir + '\\' + content + '\n';
+  });
+
+  contents.forEach((content) => {
+    const resolvedContent = path.resolve(dir, content);
+    const stat = fs.statSync(resolvedContent);
+    if (stat.isDirectory()) {
+      const newDir: string = dir + '\\' + content;
       const folder: string[] = fs.readdirSync(newDir);
       txtOutput = viewFiles(folder, newDir, txtOutput); // if there are more filenames within a subfolder, run this func again inside it
-    } else {
-      txtOutput += dir + '\\' + content + '\n';
     }
+  });
+  return txtOutput;
+};
+
+// will print every folder name in the directory/subdirectories
+const viewFolders = (contents: string[], dir: string, txtOutput: string) => {
+  contents.forEach((content) => {
+    const resolvedContent = path.resolve(dir, content);
+    const stat = fs.statSync(resolvedContent);
+    if (!stat.isDirectory()) {
+      return;
+    }
+    txtOutput += dir + '\\' + content + '\n';
+    const newDir: string = dir + '\\' + content;
+    const folder: string[] = fs.readdirSync(newDir);
+    txtOutput = viewFolders(folder, newDir, txtOutput); // if there are more folders within a subfolder, run this func again inside it
   });
   return txtOutput;
 };
@@ -100,6 +172,14 @@ ipcMain.handle('change-files', async (event, arg) => {
   return { status: 'Success', numChanged: numChanged };
 });
 
+// returns number of folder names changed, if any
+ipcMain.handle('change-folders', async (event, arg) => {
+  let numChanged = 0;
+  const contents = fs.readdirSync(arg[0]); // arg[0] = valid folder path
+  numChanged = folderUpdater(contents, arg, numChanged);
+  return { status: 'Success', numChanged: numChanged };
+});
+
 // returns filenames if a valid path is passed into arg
 ipcMain.handle('path', async (event, arg) => {
   try {
@@ -111,7 +191,8 @@ ipcMain.handle('path', async (event, arg) => {
 });
 
 // returns the txt file location once generated or an error
-ipcMain.handle('view-filenames', async (event, arg) => {
+// lists either filenames/folder names
+ipcMain.handle('view-contents', async (event, arg) => {
   if (!fs.existsSync(app.getPath('desktop') + '/logs')) {
     fs.mkdirSync(app.getPath('desktop') + '/logs');
   }
@@ -123,7 +204,9 @@ ipcMain.handle('view-filenames', async (event, arg) => {
     const contents = fs.readdirSync(arg[0]); // arg[0] = valid folder path
     txtOutput +=
       'Contents of directory ' + arg[0] + ' and its subdirectories:\n';
-    txtOutput = viewFiles(contents, arg[0], txtOutput);
+    // arg[2] = viewFolders (true/false)
+    if (arg[2]) txtOutput = viewFolders(contents, arg[0], txtOutput);
+    else txtOutput = viewFiles(contents, arg[0], txtOutput);
     fs.writeFileSync(logsPath + '/' + arg[1], txtOutput); // arg[1] = passed in txt filename
     return logsPath; // txt file location
   } catch (error) {
@@ -171,8 +254,11 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
+    width: 728,
     height: 728,
+    maximizable: false,
+    fullscreenable: false,
+    resizable: false,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

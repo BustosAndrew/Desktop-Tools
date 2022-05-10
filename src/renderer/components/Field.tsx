@@ -1,11 +1,13 @@
-import { Button } from '@mui/material/';
-import { Stack } from '@mui/material';
-import { Typography } from '@mui/material';
-import { Checkbox } from '@mui/material';
-import { TextField } from '@mui/material/';
-import { FormControlLabel } from '@mui/material/';
+import {
+  FormControlLabel,
+  Button,
+  TextField,
+  Checkbox,
+  Typography,
+  Stack,
+} from '@mui/material';
 import { useState, useEffect } from 'react';
-import '../App.css';
+// import '../App.css';
 
 interface FieldProp {
   header?: string;
@@ -15,6 +17,7 @@ interface FieldProp {
   buttonVisible: boolean;
   checkboxVisible: boolean;
   label: string;
+  checkboxLabel?: string;
   value: string;
   fieldName: string;
   isRequired: boolean;
@@ -25,7 +28,7 @@ interface FieldProp {
   replaceTextHandler?(text: string): void;
   execHandler?(): void;
   createTxtFile?(filename: string): void;
-  checkboxHandler?(): void;
+  checkboxHandler?(fieldName: string): void;
 }
 
 export const Field = ({
@@ -36,6 +39,7 @@ export const Field = ({
   buttonVisible,
   checkboxVisible,
   label,
+  checkboxLabel,
   value,
   isRequired,
   disable,
@@ -49,6 +53,7 @@ export const Field = ({
   checkboxHandler,
 }: FieldProp) => {
   const [fieldVal, setFieldVal] = useState(value);
+  const [showTxtFileLoc, setShowTxtFileLoc] = useState(false);
 
   const changeHandler = (val: string) => {
     pathHandler ? pathHandler(val) : null;
@@ -59,45 +64,46 @@ export const Field = ({
   useEffect(() => {
     // when the page first reloads since selecting a folder causes a page refresh
     pathHandler
-      ? window.electron.ipcRenderer.getPathOnce('path', (arg: string) => {
-          pathHandler(arg);
-          setFieldVal(arg);
+      ? window.electron?.ipcRenderer.getPathOnce('path', (arg: string) => {
+          if (arg) {
+            pathHandler(arg);
+            setFieldVal(arg);
+            return;
+          }
+          if (!arg) {
+            pathHandler('');
+            setFieldVal('');
+            return;
+          }
         })
       : null;
-  });
+  }, [fieldVal, pathHandler]);
 
   return (
-    <Stack
-      justifyContent="center"
-      alignItems="center"
-      spacing={1.5}
-      direction="column"
-    >
+    <Stack justifyContent="start" alignItems="center" direction="column">
       {header && (
-        <Typography sx={{ fontWeight: 'bold' }} variant="subtitle1">
+        <Typography sx={{ fontWeight: 'bold' }} variant="caption">
           {header}
         </Typography>
       )}
       {subheader && (
-        <Typography sx={{ fontWeight: 'bold' }} variant="subtitle1">
+        <Typography sx={{ fontWeight: 'bold' }} variant="caption">
           {subheader}
         </Typography>
       )}
-      <Stack
-        justifyContent="center"
-        alignItems="center"
-        spacing={2}
-        direction="row"
-      >
+      <Stack justifyContent="start" alignItems="center" direction="row">
         <TextField
           sx={{
-            width: 600,
+            width: 300,
+            height: 50,
           }}
+          inputProps={{ style: { fontSize: 11 } }}
+          InputLabelProps={{ style: { fontSize: 13 } }}
           required={isRequired ? true : false}
           variant="outlined"
           value={fieldVal}
           label={label}
-          margin={!header ? 'normal' : 'none'}
+          margin="dense"
           disabled={disable ? true : false}
           onChange={(event) => {
             setFieldVal(event.target.value);
@@ -114,6 +120,7 @@ export const Field = ({
         />
         <span
           className={disable ? 'clear-disabled' : 'clear'}
+          style={{ fontSize: '18px' }}
           onClick={() => {
             !disable && setFieldVal('') && changeHandler('');
             createTxtFile ? setFieldVal('report.txt') : null;
@@ -128,26 +135,34 @@ export const Field = ({
       {checkboxVisible && (
         <FormControlLabel
           label={
-            <Typography sx={{ fontWeight: 'bold' }}>
-              Do you want to replace/delete all occurrences?
+            <Typography sx={{ fontWeight: 'bold' }} variant="caption">
+              {checkboxLabel}
             </Typography>
           }
           control={
             <Checkbox
+              sx={{ transform: 'scale(.8)' }}
               defaultChecked={false}
-              onChange={() => (checkboxHandler ? checkboxHandler() : null)}
+              onChange={() =>
+                checkboxHandler ? checkboxHandler(fieldName) : null
+              }
             />
           }
           labelPlacement="start"
+          disabled={disable}
         />
+      )}
+      {resultPath && showTxtFileLoc && (
+        <Typography sx={{ fontWeight: 'bold' }} variant="caption">
+          {resultPath}
+        </Typography>
       )}
       {buttonVisible && (
         <Button
-          size="medium"
+          size="small"
           sx={{
             marginX: 25,
             borderRadius: 16,
-            paddingX: 1.5,
             backgroundColor: '#5B89FF',
           }}
           variant="contained"
@@ -157,18 +172,14 @@ export const Field = ({
           onClick={() => {
             if (fieldName === 'first') window.electron.ipcRenderer.getPath();
             createTxtFile ? createTxtFile(fieldVal) : null;
+            createTxtFile ? setShowTxtFileLoc(true) : null;
             execHandler ? execHandler() : null;
           }}
         >
-          <Typography sx={{ fontWeight: 'bold' }} variant="button">
+          <Typography sx={{ fontWeight: 'bold' }} variant="caption">
             {buttonText}
           </Typography>
         </Button>
-      )}
-      {resultPath && (
-        <Typography sx={{ fontWeight: 'bold' }} variant="subtitle1">
-          {resultPath}
-        </Typography>
       )}
     </Stack>
   );
