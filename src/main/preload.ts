@@ -1,0 +1,45 @@
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+
+export type Channels = 'ipc-example';
+
+contextBridge.exposeInMainWorld('electron', {
+  ipcRenderer: {
+    sendMessage(channel: Channels, args: unknown[]) {
+      ipcRenderer.send(channel, args);
+    },
+    on(channel: Channels, func: (...args: unknown[]) => void) {
+      const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
+        func(...args);
+      ipcRenderer.on(channel, subscription);
+
+      return () => ipcRenderer.removeListener(channel, subscription);
+    },
+    once(channel: Channels, func: (...args: unknown[]) => void) {
+      ipcRenderer.once(channel, (_event, ...args) => func(...args));
+    },
+    getPath() {
+      ipcRenderer.send('path');
+    },
+    getPathOnce(channel: Channels, func: (...args: unknown[]) => void) {
+      const validChannels = ['path'];
+      if (validChannels.includes(channel)) {
+        // Deliberately strip event as it includes `sender`
+        ipcRenderer.once(channel, (_event: IpcRendererEvent, ...args) =>
+          func(...args)
+        );
+      }
+    },
+    async isValidPath(arg: string) {
+      return ipcRenderer.invoke('path', arg);
+    },
+    async changeFilenames(arg: string) {
+      return ipcRenderer.invoke('change-files', arg);
+    },
+    async generateTxtFile(arg: string) {
+      return ipcRenderer.invoke('view-contents', arg); // used for either filenames/folder names
+    },
+    async changeFolderNames(arg: string) {
+      return ipcRenderer.invoke('change-folders', arg);
+    },
+  },
+});
