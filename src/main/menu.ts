@@ -204,10 +204,6 @@ export default class MenuBuilder {
         label: '&File',
         submenu: [
           {
-            label: '&Open',
-            accelerator: 'Ctrl+O',
-          },
-          {
             label: '&Close',
             accelerator: 'Ctrl+W',
             click: () => {
@@ -244,19 +240,17 @@ export default class MenuBuilder {
                     BrowserWindow.getFocusedWindow()?.webContents.send('about');
                   },
                 },
-                {
-                  label: 'How To',
-                  click: () => {
-                    BrowserWindow.getFocusedWindow()?.webContents.send(
-                      'how-to'
-                    );
-                  },
-                },
               ],
       },
       {
         label: 'Help',
         submenu: [
+          {
+            label: 'How To',
+            click: () => {
+              BrowserWindow.getFocusedWindow()?.webContents.send('how-to');
+            },
+          },
           {
             label: 'Learn More',
             click() {

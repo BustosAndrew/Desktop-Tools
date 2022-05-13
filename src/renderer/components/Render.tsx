@@ -111,8 +111,14 @@ export const Render = () => {
 
   // when the page first loads or when searchQuery/path changes
   useEffect(() => {
-    window.electron.ipcRenderer.on('about', () => setShowAbout(true));
-    window.electron.ipcRenderer.on('how-to', () => setShowHowTo(true));
+    window.electron.ipcRenderer.on('about', () => {
+      setShowAbout(true);
+      setShowHowTo(false);
+    });
+    window.electron.ipcRenderer.on('how-to', () => {
+      setShowHowTo(true);
+      setShowAbout(false);
+    });
 
     if (!searchQuery) {
       setDisableExecute(true);
