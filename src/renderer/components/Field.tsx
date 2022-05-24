@@ -70,11 +70,9 @@ export const Field = ({
             setFieldVal(arg);
             return;
           }
-          if (!arg) {
-            pathHandler('');
-            setFieldVal('');
-            return;
-          }
+          pathHandler('');
+          setFieldVal('');
+          return;
         })
       : null;
   }, [fieldVal, pathHandler]);

@@ -98,13 +98,10 @@ const folderUpdater = (contents: string[], arg: any[], numChanged: number) => {
 
 // will print every filename in the directory/subdirectories
 const viewFiles = (contents: string[], dir: string, txtOutput: string) => {
-  // let folderFound = false;
-  // let enterFolder = false;
   contents.forEach((content) => {
     const resolvedContent = path.resolve(dir, content);
     const stat = fs.statSync(resolvedContent);
     if (stat.isDirectory()) {
-      // folderFound = true;
       return; // continue;
     }
     txtOutput += dir + '\\' + content + '\n';
@@ -147,7 +144,7 @@ ipcMain.on('ipc-example', async (event, arg) => {
 
 // nothing passed into arg
 ipcMain.on('path', async (event, arg) => {
-  console.log(arg);
+  // console.log(arg);
   if (mainWindow !== null) {
     // opens a file explorer to select a folder
     dialog

@@ -11,7 +11,7 @@ import { About } from './About';
 import { HowTo } from './HowTo';
 import '../App.css';
 
-export const Render = () => {
+export const FileFolderFinder = () => {
   const [fieldsDisabled, setFieldDisabled] = useState<any>({
     first: false,
     second: true,
@@ -178,7 +178,7 @@ export const Render = () => {
         variant="subtitle2"
         sx={{ fontWeight: 'bold', textAlign: 'center' }}
       >
-        FileName or FolderName Updater
+        File/Folder Finder
       </Typography>
       <Field
         label="Path\to\folder"
