@@ -6,6 +6,7 @@ import {
   Stack,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Field } from './Field';
 import { About } from './About';
 import { HowTo } from './HowTo';
@@ -36,6 +37,7 @@ export const FileFolderUpdater = () => {
   );
   const [showAbout, setShowAbout] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
+  const navigate = useNavigate();
 
   const aboutHandler = (): void => {
     setShowAbout(!showAbout);
@@ -174,6 +176,21 @@ export const FileFolderUpdater = () => {
     <Box>
       {showAbout && <About aboutHandler={aboutHandler} />}
       {showHowTo && <HowTo howToHandler={howToHandler} />}
+      <Typography
+        sx={{
+          position: 'absolute',
+          left: 15,
+          top: 0,
+          fontWeight: 800,
+          textAlign: 'right',
+          fontSize: 40,
+        }}
+        variant="caption"
+      >
+        <span className="back" onClick={() => navigate(-1)}>
+          &larr;
+        </span>
+      </Typography>
       <Typography
         variant="subtitle2"
         sx={{ fontWeight: 'bold', textAlign: 'center' }}
