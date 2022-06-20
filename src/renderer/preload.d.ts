@@ -13,7 +13,9 @@ declare global {
         getPathOnce(channel: any, func: any): void;
         getPath(): void;
         isValidPath(arg: string): Promise<string>;
-        changeFilenames(arg: any[]): Promise<object>;
+        changeFilenames(arg: any[]): Promise<any>;
+        findFileNames(arg: any[]): Promise<string[]>;
+        findFolderNames(arg: any[]): Promise<string[]>;
         changeFolderNames(arg: any[]): Promise<any>;
         generateTxtFile(arg: any[]): Promise<string>;
       };

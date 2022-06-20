@@ -168,7 +168,8 @@ export const Field = ({
             (fieldName === 'fourth' && disableExecute) || disable ? true : false
           }
           onClick={() => {
-            if (fieldName === 'first') window.electron.ipcRenderer.getPath();
+            if (fieldName === 'folderSelect')
+              window.electron.ipcRenderer.getPath();
             createTxtFile ? createTxtFile(fieldVal) : null;
             createTxtFile ? setShowTxtFileLoc(true) : null;
             execHandler ? execHandler() : null;

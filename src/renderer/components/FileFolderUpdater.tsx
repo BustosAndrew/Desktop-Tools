@@ -205,7 +205,7 @@ export const FileFolderUpdater = () => {
         checkboxVisible={false}
         isRequired={false}
         disable={fieldsDisabled.first}
-        fieldName="first"
+        fieldName="folderSelect"
         pathHandler={pathHandler}
       />
       <br />

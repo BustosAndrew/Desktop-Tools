@@ -4,37 +4,32 @@ import {
   Checkbox,
   FormControlLabel,
   Stack,
+  Button,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Field } from './Field';
 import { About } from './About';
 import { HowTo } from './HowTo';
+import { CheckboxesDropdown } from './CheckboxesDropdown';
 import '../App.css';
 
 export const FileFolderFinder = () => {
   const [fieldsDisabled, setFieldDisabled] = useState<any>({
-    first: false,
-    second: true,
-    third: true,
-    fourth: true,
+    folderSelect: false,
+    keywords: true,
+    dropdown: true,
     folderCheckbox: true,
   });
   const [path, setPath] = useState('');
   const [disableExecute, setDisableExecute] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [replaceText, setReplaceText] = useState('');
   const [results, setResults] = useState<any>({ status: '', numChanged: '' });
-  const [txtFileLoc, setTxtFileLoc] = useState('');
-  const [replaceAll, setReplaceAll] = useState(false);
-  const [changeFolders, setChangeFolders] = useState(false);
-  const [viewFolders, setViewFolders] = useState(false);
+  const [findFolders, setFindFolders] = useState(false);
   const [queryHeader, setQueryHeader] = useState(
-    'Enter characters to replace/remove in the filenames (required):'
+    'Enter keywords to find in the filenames (required):'
   );
-  const [numChangedText, setNumChangedText] = useState(
-    'Number of filenames changed:'
-  );
+  const [extensions, setExtensions] = useState<string[]>([]);
   const [showAbout, setShowAbout] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
   const navigate = useNavigate();
@@ -48,67 +43,27 @@ export const FileFolderFinder = () => {
 
   const pathHandler = (folderPath: string): void => {
     setPath(folderPath);
-    // console.log(folderPath);
   };
 
   const queryHandler = (query: string): void => {
     setSearchQuery(query);
-    // console.log(query);
-  };
-
-  const replaceTextHandler = (text: string) => {
-    setReplaceText(text);
   };
 
   const execHandler = () => {
-    if (!changeFolders)
-      window.electron.ipcRenderer
-        .changeFilenames([path, searchQuery, replaceText, replaceAll])
-        .then((result: any) =>
-          setResults({
-            status: result.status,
-            numChanged: result.numChanged,
-          })
-        )
-        .catch(() => {});
-    else if (changeFolders)
-      window.electron.ipcRenderer
-        .changeFolderNames([path, searchQuery, replaceText, replaceAll])
-        .then((result: any) =>
-          setResults({
-            status: result.status,
-            numChanged: result.numChanged,
-          })
-        )
-        .catch(() => {});
-    // console.log(replaceAll);
+    if (searchQuery && !findFolders) {
+      window.electron.ipcRenderer.findFileNames([searchQuery, extensions]);
+    } else if (searchQuery) {
+      window.electron.ipcRenderer.findFolderNames([searchQuery]);
+    }
   };
 
-  const checkboxHandler = (fieldName: string) => {
-    if (fieldName === 'fourth') setReplaceAll(!replaceAll);
-    else if (fieldName === 'second') setViewFolders(!viewFolders);
+  const checkboxHandler = () => {
+    setFindFolders(!findFolders);
   };
 
-  const changeFolderCheckboxHandler = () => {
-    // !changeFolders because after setChangeFolders runs it'll work properly. TODO: use in useEffect
-    setQueryHeader(
-      !changeFolders
-        ? 'Enter characters to replace/remove in the folder names (required):'
-        : 'Enter characters to replace/remove in the filenames (required):'
-    );
-    setNumChangedText(
-      !changeFolders
-        ? 'Number of folder names changed:'
-        : 'Number of filenames changed:'
-    );
-    setChangeFolders(!changeFolders);
-  };
-
-  const createTxtFile = (filename: string) => {
-    window.electron.ipcRenderer
-      .generateTxtFile([path, filename, viewFolders])
-      .then((result: string) => setTxtFileLoc(result))
-      .catch(() => {});
+  // when the checkboxes dropdown field changes
+  const extensionsHandler = (values: string[]) => {
+    setExtensions(values);
   };
 
   // when the page first loads or when searchQuery/path changes
@@ -122,24 +77,29 @@ export const FileFolderFinder = () => {
       setShowAbout(false);
     });
 
+    setQueryHeader(
+      !findFolders
+        ? 'Enter keywords to find in the folder names (required):'
+        : 'Enter keywords to find in the filenames (required):'
+    );
+
     if (!searchQuery) {
       setDisableExecute(true);
       setFieldDisabled({
-        fourth: true,
+        dropdown: true,
       });
     } else if (searchQuery) {
       setDisableExecute(false);
       setFieldDisabled({
-        fourth: false,
+        dropdown: false,
       });
     }
 
     if (!path) {
       setDisableExecute(true);
       setFieldDisabled({
-        second: true,
-        third: true,
-        fourth: true,
+        keywords: true,
+        dropdown: true,
         folderCheckbox: true,
       });
     } else {
@@ -148,21 +108,20 @@ export const FileFolderFinder = () => {
         .then((result: string) => {
           if (result === 'Invalid folder path!') {
             setFieldDisabled({
-              second: true,
-              third: true,
-              fourth: true,
+              keywords: true,
+              dropdown: true,
               folderCheckbox: true,
             });
             return;
           }
           setFieldDisabled({
-            second: false,
-            third: false,
+            keywords: false,
+            dropdown: false,
             folderCheckbox: false,
           });
 
           if (!searchQuery) {
-            setFieldDisabled({ fourth: true });
+            setFieldDisabled({ dropdown: true });
             setDisableExecute(true);
           }
 
@@ -170,7 +129,7 @@ export const FileFolderFinder = () => {
         })
         .catch(() => {});
     }
-  }, [path, searchQuery]);
+  }, [path, searchQuery, findFolders]);
 
   return (
     <Box>
@@ -204,39 +163,23 @@ export const FileFolderFinder = () => {
         buttonVisible={true}
         checkboxVisible={false}
         isRequired={false}
-        disable={fieldsDisabled.first}
-        fieldName="first"
+        disable={fieldsDisabled.folderSelect}
+        fieldName="folderSelect"
         pathHandler={pathHandler}
       />
       <br />
-      <Field
-        label="Enter txt file name"
-        value="report.txt"
-        header="Enter a name for the txt file to be created in the app's logs folder (optional)"
-        subheader="This will show a preview of all the contents present in the folder and its subfolders:"
-        resultPath={'Text file install location: ' + txtFileLoc}
-        buttonText="GENERATE"
-        buttonVisible={true}
-        checkboxVisible={true}
-        isRequired={false}
-        disable={fieldsDisabled.second}
-        fieldName="second"
-        createTxtFile={createTxtFile}
-        checkboxLabel="Do you to want preview folder names instead of filenames in the txt file?"
-        checkboxHandler={checkboxHandler}
-      />
       <Stack justifyContent="center" alignItems="center" direction="column">
         <FormControlLabel
           label={
             <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-              Do you want to change folder names instead of filenames?
+              Do you want to find only folder names?
             </Typography>
           }
           control={
             <Checkbox
               sx={{ transform: 'scale(.8)' }}
               defaultChecked={false}
-              onChange={() => changeFolderCheckboxHandler()}
+              onChange={() => checkboxHandler()}
             />
           }
           labelPlacement="start"
@@ -244,46 +187,40 @@ export const FileFolderFinder = () => {
         />
       </Stack>
       <Field
-        label="Enter characters to search for (i.e , or abc)"
+        label={queryHeader}
         value=""
         header={queryHeader}
         buttonVisible={false}
         checkboxVisible={false}
-        isRequired={false}
-        disable={fieldsDisabled.third}
-        fieldName="third"
+        isRequired={true}
+        disable={fieldsDisabled.keywords}
+        fieldName="keywords"
         queryHandler={queryHandler}
       />
-      <Field
-        label="Enter characters to replace with (leave blank to delete)"
-        value=""
-        header="Enter the character(s) you want to replace with (optional):"
-        buttonText="EXECUTE"
-        buttonVisible={true}
-        checkboxVisible={true}
-        isRequired={false}
-        disable={fieldsDisabled.fourth}
-        disableExecute={disableExecute}
-        fieldName="fourth"
-        replaceTextHandler={replaceTextHandler}
-        execHandler={execHandler}
-        checkboxLabel="Do you want to replace all occurrences within each file/folder name?"
-        checkboxHandler={checkboxHandler}
-      />
-      <Stack justifyContent="start" alignItems="center" direction="column">
-        {' '}
+      <CheckboxesDropdown extensionsHandler={extensionsHandler} />
+      <Stack
+        marginTop={2}
+        justifyContent="start"
+        alignItems="center"
+        direction="column"
+      >
+        <Button
+          sx={{ borderRadius: 5, backgroundColor: '#5B89FF' }}
+          size="small"
+          variant="contained"
+          onClick={() => execHandler()}
+          disabled={disableExecute}
+        >
+          <Typography fontWeight="bold" variant="caption">
+            EXECUTE
+          </Typography>
+        </Button>
         <Typography
           sx={{ fontWeight: 'bold', marginX: '50', textAlign: 'center' }}
           mt={1.5}
           variant="caption"
         >
           Result: {results.status}
-        </Typography>
-        <Typography
-          sx={{ fontWeight: 'bold', textAlign: 'center' }}
-          variant="caption"
-        >
-          {numChangedText} {results.numChanged}
         </Typography>
       </Stack>
       <Typography
@@ -296,7 +233,7 @@ export const FileFolderFinder = () => {
         }}
         variant="caption"
       >
-        Ver. 1.5.1
+        Ver. 1.0.0
       </Typography>
       <Typography
         sx={{
@@ -308,7 +245,7 @@ export const FileFolderFinder = () => {
         }}
         variant="caption"
       >
-        4/14/2022 - A.B.
+        6/14/2022 - A.B.
       </Typography>
     </Box>
   );

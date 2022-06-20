@@ -1,5 +1,6 @@
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
+import { Typography, Stack } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
@@ -21,13 +22,19 @@ const extensions = [
   { extension: '.gif' },
 ];
 
-export const CheckboxesDropdown = () => {
+interface CheckboxesProps {
+  extensionsHandler(values: string[]): void;
+}
+
+export const CheckboxesDropdown = ({ extensionsHandler }: CheckboxesProps) => {
   return (
     <Autocomplete
+      sx={{ m: 'auto', width: 335 }}
       multiple
       options={extensions}
       disableCloseOnSelect
       getOptionLabel={(option) => option.extension}
+      ListboxProps={{ style: { fontSize: 13 } }}
       renderOption={(props, option, { selected }) => (
         <li {...props}>
           <Checkbox
@@ -39,13 +46,39 @@ export const CheckboxesDropdown = () => {
           {option.extension}
         </li>
       )}
-      style={{ width: 500 }}
+      onChange={(event, value) => {
+        const values: string[] = [];
+        value.forEach((ext) => {
+          values.push(ext.extension);
+        });
+        console.log(values);
+        extensionsHandler(values);
+      }}
       renderInput={(params) => (
-        <TextField
-          {...params}
-          label="File Extensions"
-          placeholder=".xlsx, .pdf, .docx, .jpg"
-        />
+        <Stack
+          marginTop={2}
+          justifyContent="center"
+          alignContent="center"
+          direction="column"
+        >
+          <Typography
+            sx={{ fontWeight: 'bold', marginBottom: 1 }}
+            variant="caption"
+            textAlign="center"
+          >
+            Enter/select a file extension to filter for (optional):
+          </Typography>
+          <TextField
+            {...params}
+            sx={{
+              '& input::placeholder': { fontSize: 11 },
+              '& label': { fontSize: 13, color: 'gray' },
+              '& input': { fontSize: 11, color: 'gray' },
+            }}
+            label="File Extensions"
+            placeholder=".xlsx, .pdf, .docx, .jpg"
+          />
+        </Stack>
       )}
     />
   );
