@@ -3,7 +3,7 @@ Portable exe download [here](https://drive.google.com/file/d/1Q1Y3HY9DXcErQ4vRnT
 <br>
 
 <p>
-  This project uses React, Material UI, Node and TypeScript.
+  This project uses React, Material UI, Node and TypeScript. This was also built on top of the electron react boilerplate project.
 </p>
 
 <br>
